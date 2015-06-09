@@ -1,0 +1,16 @@
+#!/bin/bash
+
+USER=user # TODO: 替换用户名
+VPNUUID=d31f7890-7a45-4596-ad6d-389059b0cc6c # TODO: 替换UUID
+
+while true
+do
+  if  [[ "$(nmcli con status|grep $VPNUUID)" == "" ]]; then
+      echo "Disconnected, trying to reconnect..."
+      sleep 1s
+      su $USER -c "nmcli con up uuid $VPNUUID"
+  else
+      echo "Already connected !"
+  fi
+  sleep 10
+done

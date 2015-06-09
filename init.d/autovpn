@@ -1,0 +1,71 @@
+#!/bin/bash
+
+NAME=autovpn
+DAEMON="/usr/sbin/$NAME"
+PIDFILE=/var/run/$NAME.pid
+COMMAND="$1"
+USER=user
+VPNUUID=d31f7890-7a45-4596-ad6d-389059b0cc6c
+
+# 检测文件名是否存在且具有“可执行”权限
+test -x $DAEMON || exit 0
+
+# Get lsb functions
+. /lib/lsb/init-functions
+
+do_start()
+{
+  if [ -e $PIDFILE ]; then
+    if $0 status > /dev/null ; then
+      log_success_msg "already started; not starting."
+      return
+    else
+      log_success_msg "Removing stale PID file $PIDFILE."
+      rm -f $PIDFILE
+    fi
+  fi
+  log_begin_msg "Starting $NAME"
+  su root -c "start-stop-daemon --start --quiet --pidfile $PIDFILE \
+      --exec $DAEMON -u root -b -m"
+  log_end_msg $?
+}
+
+do_stop() {
+  log_daemon_msg "Stopping $DESC" "$NAME"
+  su root -c "nmcli con down uuid $VPNUUID; \
+    start-stop-daemon --stop --retry 5 --quiet --oknodo --pidfile $PIDFILE"
+
+  log_end_msg $?
+  rm -f $PIDFILE
+}
+
+do_reload() {
+  log_daemon_msg "reload $NAME"
+  do_stop
+  do_start
+  log_action_end_msg $?
+}
+
+do_status() {
+  status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
+}
+
+case "$1" in
+  start)
+      do_start
+      ;;
+  stop)
+      do_stop
+      ;;
+  reload|restart)
+      do_reload
+      ;;
+  status)
+      do_status
+      ;;
+  *)
+      do_reload
+      ;;
+esac
+
+exit 0
