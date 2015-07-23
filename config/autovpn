@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# 配置需要连接vpn的用户名
+USER=user
+
+#配置VPNUUID
+VPNUUID=d31f7890-7a45-4596-ad6d-389059b0cc6c

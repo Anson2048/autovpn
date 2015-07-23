@@ -13,6 +13,9 @@ test -x $DAEMON || exit 0
 # Get lsb functions
 . /lib/lsb/init-functions
 
+# Include avahi-daemon defaults if available.
+test -f /etc/default/$NAME && . /etc/default/$NAME
+
 do_start()
 {
   if [ -e $PIDFILE ]; then
