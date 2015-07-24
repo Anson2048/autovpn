@@ -7,8 +7,8 @@ VPNUUID=d31f7890-7a45-4596-ad6d-389059b0cc6c # TODO: 替换UUID
 MIN=0
 MAX=10
 
-# Include avahi-daemon defaults if available.
-test -f /etc/default/$NAME && . /etc/default/$NAME
+# Include autovpn defaults if available.
+test -f /etc/autovpn/config && . /etc/autovpn/config
 
 while [ $MIN -le $MAX ]
 do

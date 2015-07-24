@@ -13,8 +13,8 @@ test -x $DAEMON || exit 0
 # Get lsb functions
 . /lib/lsb/init-functions
 
-# Include avahi-daemon defaults if available.
-test -f /etc/default/$NAME && . /etc/default/$NAME
+# Include autovpn defaults if available.
+test -f /etc/autovpn/config && . /etc/autovpn/config
 
 do_start()
 {
