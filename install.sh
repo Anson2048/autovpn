@@ -139,7 +139,6 @@ function config_autovpn(){
 
     MAX=10
 EOF
-    cat /etc/autovpn/config.json
 }
 
 # Install
