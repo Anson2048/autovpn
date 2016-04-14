@@ -24,7 +24,7 @@ function install_autovpn(){
     rootness
     disable_selinux
     pre_install
-    # download_files
+    download_files
     config_autovpn
     install
 }
@@ -68,6 +68,21 @@ function pre_install(){
     if [ "$vpn_uuid" = "" ]; then
         vpn_uuid=$firstVPN
     fi
+
+    boot=true
+    echo "是否需要开机启动:(y/n)"
+    read -p "(Default: y):" bootInput
+    if [ "$bootInput" = "n" ]; then
+        boot=false
+    fi
+
+    chnRoute=true
+    echo "是否需要修改路由表科学上网:(y/n)"
+    read -p "(Default: y):" chnRouteInput
+    if [ "$chnRouteInput" = "n" ]; then
+        chnRoute=false
+    fi
+
     echo "####################################"
     get_char(){
         SAVEDSTTY=`stty -g`
@@ -82,19 +97,6 @@ function pre_install(){
     echo "按任意键继续，或者 Ctrl+C 退出安装"
     char=`get_char`
 
-    # Update System
-    # apt-get -y update
-    # # Install necessary dependencies
-    # apt-get install -y wget unzip curl build-essential autoconf libtool libssl-dev
-    # # Get IP address
-    # echo "Getting Public IP address, Please wait a moment..."
-    # IP=$(curl -s -4 icanhazip.com)
-    # if [[ "$IP" = "" ]]; then
-    #     IP=$(curl -s -4 ipinfo.io | grep "ip" | awk -F\" '{print $4}')
-    # fi
-    # echo -e "Your main public IP is\t\033[32m$IP\033[0m"
-    # echo ""
-    #Current folder
     cur_dir=`pwd`
     cd $cur_dir
 }
@@ -104,7 +106,7 @@ function download_files(){
     if [ -f autovpn.zip ];then
         echo "autovpn.zip [found]"
     else
-        if ! wget --no-check-certificate https://github.com/autovpn/autovpn/archive/master.zip -O autovpn.zip;then
+        if ! wget --no-check-certificate https://github.com/Anson2048/autovpn/archive/master.zip -O autovpn.zip;then
             echo "Failed to download autovpn.zip"
             exit 1
         fi
@@ -112,13 +114,13 @@ function download_files(){
     unzip autovpn.zip
     if [ $? -eq 0 ];then
         cd $cur_dir/autovpn-master/
-        if ! wget --no-check-certificate https://raw.githubusercontent.com/teddysun/autovpn_install/master/autovpn-debian; then
+        if ! wget --no-check-certificate https://raw.githubusercontent.com/Anson2048/autovpn/master/install.sh; then
             echo "Failed to download autovpn start script!"
             exit 1
         fi
     else
         echo ""
-        echo "Unzip autovpn failed! Please visit http://teddysun.com/358.html and contact."
+        echo "Unzip autovpn failed!"
         exit 1
     fi
 }
@@ -132,13 +134,14 @@ function config_autovpn(){
     #!/bin/bash
 
     # 配置需要连接vpn的用户名
-    USER=user
+    USER=`whoami`
 
     #配置VPNUUID
     VPNUUID="${vpn_uuid}"
 
     MAX=10
 EOF
+
 }
 
 # Install
@@ -148,8 +151,8 @@ function install(){
         echo "autovpn has been installed!"
         exit 0
     else
-        if [ -s $cur_dir/autovpn ];then
-            mv $cur_dir/autovpn /usr/sbin/autovpn
+        if [ -s $cur_dir/autovpn-master/autovpn ];then
+            mv $cur_dir/autovpn-master/autovpn /usr/sbin/autovpn
             chmod +x /usr/sbin/autovpn
         else
             echo "autovpn install failed! File missing"
@@ -157,11 +160,22 @@ function install(){
         fi
 
         if [ $? -eq 0 ]; then
-            if [ -s $cur_dir/init.d/autovpn ]; then
+            if [ -s $cur_dir/autovpn-master/init.d/autovpn ]; then
                 # Add run on system start up
-                mv $cur_dir/init.d/autovpn /etc/init.d/autovpn
+                mv $cur_dir/autovpn-master/init.d/autovpn /etc/init.d/autovpn
                 chmod +x /etc/init.d/autovpn
-                update-rc.d autovpn defaults
+
+                if [ "$boot"]; then
+                    update-rc.d autovpn defaults
+                fi
+
+                if [ "$chnRoute"]; then
+                    mv /etc/ppp/ip-pre-up /etc/ppp/ip-pre-up.bk
+                    mv /etc/ppp/ip-down.d/ip-down /etc/ppp/ip-down.d/ip-down.bk
+                    mv $cur_dir/autovpn-master/chnroutes/ip-pre-up /etc/ppp/ip-pre-up
+                    mv $cur_dir/autovpn-master/chnroutes/ip-down /etc/ppp/ip-down.d/ip-down
+                fi
+
                 # Run autovpn in the background
                 /etc/init.d/autovpn start
                 # Run success or not
@@ -182,9 +196,9 @@ function install(){
     fi
     cd $cur_dir
     # # Delete autovpn floder
-    # rm -rf $cur_dir/autovpn-master/
+    rm -rf $cur_dir/autovpn-master/
     # # Delete autovpn zip file
-    # rm -f autovpn.zip
+    rm -f autovpn.zip
     clear
     echo ""
     echo "Congratulations, autovpn install completed!"
@@ -219,6 +233,12 @@ function uninstall_autovpn(){
         # delete autovpn
         rm -rf /usr/sbin/autovpn
         rm -rf /etc/init.d/autovpn
+
+        if [ -s /etc/ppp/ip-pre-up.bk ]; then
+            mv /etc/ppp/ip-pre-up.bk /etc/ppp/ip-pre-up
+            mv /etc/ppp/ip-down.d/ip-down.bk /etc/ppp/ip-down.d/ip-down
+        fi
+
         echo "autovpn uninstall success!"
     else
         echo "uninstall cancelled, Nothing to do"

@@ -1,33 +1,11 @@
 
 # 自动安装
 
-## setp 1 clone autovpn
-
 ```shell
-git clone git@github.com:Anson2048/autovpn.git
+wget --no-check-certificate https://raw.githubusercontent.com/Anson2048/autovpn/master/install.sh &&
+chmod +x install.sh &&
+./install.sh 2>&1 | tee auto-vpn.log
 ```
-
-
-## setp 2 
-
-```shell
-sudo ./install.sh 
-```
-
-# setp 3 （可选）. 根据访问网络， 是否使用vpn
-
-```shell
-cd ../chnroutes
-sudo mv ip-pre-up /etc/ppp/ip-pre-up
-sudo mv ip-down /etc/ppp/ip-down.d/ip-down
-```
-
-also see [chnroutes](https://github.com/fivesheep/chnroutes)
-
-###注意事项
-
-autovpn默认自动连接的用户为user， 如用户名为其他可以修改配置文件`/etc/autovpn/config`， 中 `user` 的值 
-
 
 # 手动安装
 
@@ -61,7 +39,7 @@ sudo update-rc.d autovpn defaults
 nmcli con list
 
 创建配置文件 config， 写入
-    USER=user
+    USER=`whoami`
 
     #配置VPNUUID
     VPNUUID="${vpn_uuid}"
@@ -71,3 +49,8 @@ nmcli con list
 sudo mv config， /etc/autovpn/config
 
 ```
+
+
+# 其他
+
+[chnroutes](https://github.com/fivesheep/chnroutes)
